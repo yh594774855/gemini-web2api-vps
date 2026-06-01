@@ -37,7 +37,7 @@ random_key() {
 }
 
 ask() {
-  local var="$1" prompt="$2" default="$3" value="${!var:-}"
+  local var="$1" prompt="$2" default="$3" value="${!var-}"
   if [ -n "$value" ]; then return 0; fi
   printf "%s [%s]: " "$prompt" "$default" >&2
   IFS= read -r value
@@ -46,7 +46,7 @@ ask() {
 }
 
 ask_secret_or_generate() {
-  local var="$1" prompt="$2" generated="$3" value="${!var:-}"
+  local var="$1" prompt="$2" generated="$3" value="${!var-}"
   if [ -n "$value" ]; then return 0; fi
   printf "%s [回车自动生成]: " "$prompt" >&2
   stty -echo 2>/dev/null || true
@@ -58,7 +58,7 @@ ask_secret_or_generate() {
 }
 
 ask_yes_no() {
-  local var="$1" prompt="$2" default="$3" value="${!var:-}"
+  local var="$1" prompt="$2" default="$3" value="${!var-}"
   if [ -n "$value" ]; then return 0; fi
   printf "%s [%s]: " "$prompt" "$default" >&2
   IFS= read -r value
