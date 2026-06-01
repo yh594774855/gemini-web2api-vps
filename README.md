@@ -36,7 +36,7 @@
 - Ubuntu 22.04 / 24.04
 - Debian 11 / 12
 - CentOS / Rocky / AlmaLinux / RHEL 系统（使用 yum/dnf）
-- Node.js 会由脚本自动检查；低于 18 会安装 Node.js 20 LTS
+- Node.js 会由脚本自动检查；低于 18 会安装 Node.js 20 LTS；如遇系统旧 Node 包冲突，脚本会自动移除旧 Node 相关包后重试
 - root 用户，或有 sudo 权限的用户
 
 ### 网络

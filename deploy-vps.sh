@@ -44,10 +44,19 @@ pm_install() {
 
 pm_install_node20() {
   if need_cmd apt-get; then
+    export DEBIAN_FRONTEND=noninteractive
+    as_root dpkg --configure -a || true
+    as_root apt-get -f install -y || true
     as_root apt-get update
     as_root apt-get install -y curl ca-certificates gnupg
     curl -fsSL https://deb.nodesource.com/setup_20.x | as_root bash -
-    as_root apt-get install -y nodejs
+    # Ubuntu/Debian repo Node 12/14 packages may conflict with NodeSource nodejs.
+    if ! as_root apt-get install -y nodejs; then
+      warn "NodeSource nodejs 安装冲突，移除系统旧 Node 相关包后重试"
+      as_root apt-get remove -y nodejs npm libnode-dev 'libnode*' node-gyp nodejs-doc || true
+      as_root apt-get autoremove -y || true
+      as_root apt-get install -y nodejs
+    fi
   elif need_cmd dnf || need_cmd yum; then
     # NodeSource supports EL/RHEL/CentOS-like systems.
     curl -fsSL https://rpm.nodesource.com/setup_20.x | as_root bash -
@@ -318,8 +327,21 @@ EOF_NGINX
   as_root certbot renew --dry-run || warn "certbot renew dry-run 未通过，请检查域名 DNS 是否已解析到本机公网 IP。"
 }
 
+wait_port() {
+  local port="$1" i
+  for i in $(seq 1 30); do
+    if curl -sS -m 1 "http://127.0.0.1:${port}/v1/models" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 1
+  done
+  return 1
+}
+
 test_service() {
   local port="$1" key="$2" url_base="$3"
+  say "等待服务端口就绪"
+  wait_port "$port" || warn "端口 ${port} 尚未就绪，继续尝试输出错误信息"
   say "测试模型列表"
   curl -sS -m 30 "${url_base}/v1/models" -H "Authorization: Bearer ${key}" \
     | python3 -c 'import sys,json; d=json.load(sys.stdin); print("models", len(d.get("data",[]))); print("\n".join(m.get("id","") for m in d.get("data",[])[:20]))'
