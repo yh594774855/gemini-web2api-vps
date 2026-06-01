@@ -70,11 +70,30 @@ ask_yes_no() {
   export "$var=$value"
 }
 
-install_base_deps() {
-  if need_cmd node && need_cmd git && need_cmd curl && need_cmd python3; then return 0; fi
-  say "安装基础依赖：curl git nodejs npm python3 openssl"
+node_major() {
+  if ! need_cmd node; then echo 0; return; fi
+  node -v 2>/dev/null | sed -E 's/^v([0-9]+).*/\1/' || echo 0
+}
+
+install_node20() {
+  say "安装/升级 Node.js 20 LTS（本服务需要 Node >= 18）"
   as_root apt-get update
-  as_root apt-get install -y curl git ca-certificates nodejs npm python3 openssl
+  as_root apt-get install -y curl ca-certificates gnupg
+  curl -fsSL https://deb.nodesource.com/setup_20.x | as_root bash -
+  as_root apt-get install -y nodejs
+}
+
+install_base_deps() {
+  say "检查基础依赖"
+  as_root apt-get update
+  as_root apt-get install -y curl git ca-certificates python3 openssl
+  local major
+  major="$(node_major)"
+  if [ "$major" -lt 18 ]; then
+    warn "当前 Node.js 版本过低或未安装：$(node -v 2>/dev/null || echo none)"
+    install_node20
+  fi
+  say "Node.js 版本：$(node -v)"
 }
 
 clone_or_update_project() {
