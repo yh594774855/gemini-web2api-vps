@@ -28,6 +28,36 @@ err() { printf '\033[1;31m[x]\033[0m %s\n' "$*" >&2; }
 need_cmd() { command -v "$1" >/dev/null 2>&1; }
 as_root() { if [ "$(id -u)" -eq 0 ]; then "$@"; else sudo "$@"; fi; }
 
+pm_install() {
+  if need_cmd apt-get; then
+    as_root apt-get update
+    as_root apt-get install -y "$@"
+  elif need_cmd dnf; then
+    as_root dnf install -y "$@"
+  elif need_cmd yum; then
+    as_root yum install -y "$@"
+  else
+    err "未找到支持的包管理器：apt-get / dnf / yum"
+    exit 1
+  fi
+}
+
+pm_install_node20() {
+  if need_cmd apt-get; then
+    as_root apt-get update
+    as_root apt-get install -y curl ca-certificates gnupg
+    curl -fsSL https://deb.nodesource.com/setup_20.x | as_root bash -
+    as_root apt-get install -y nodejs
+  elif need_cmd dnf || need_cmd yum; then
+    # NodeSource supports EL/RHEL/CentOS-like systems.
+    curl -fsSL https://rpm.nodesource.com/setup_20.x | as_root bash -
+    if need_cmd dnf; then as_root dnf install -y nodejs; else as_root yum install -y nodejs; fi
+  else
+    err "未找到支持的包管理器，无法安装 Node.js 20"
+    exit 1
+  fi
+}
+
 random_key() {
   if need_cmd openssl; then
     printf 'sk-gemini-web2api-%s\n' "$(openssl rand -hex 24)"
@@ -77,16 +107,12 @@ node_major() {
 
 install_node20() {
   say "安装/升级 Node.js 20 LTS（本服务需要 Node >= 18）"
-  as_root apt-get update
-  as_root apt-get install -y curl ca-certificates gnupg
-  curl -fsSL https://deb.nodesource.com/setup_20.x | as_root bash -
-  as_root apt-get install -y nodejs
+  pm_install_node20
 }
 
 install_base_deps() {
   say "检查基础依赖"
-  as_root apt-get update
-  as_root apt-get install -y curl git ca-certificates python3 openssl
+  pm_install curl git ca-certificates python3 openssl
   local major
   major="$(node_major)"
   if [ "$major" -lt 18 ]; then
@@ -231,8 +257,18 @@ EOF_UNIT
 
 install_nginx_certbot() {
   say "安装 nginx + certbot"
-  as_root apt-get update
-  as_root apt-get install -y nginx certbot python3-certbot-nginx
+  if need_cmd apt-get; then
+    pm_install nginx certbot python3-certbot-nginx
+  elif need_cmd dnf; then
+    as_root dnf install -y epel-release || true
+    as_root dnf install -y nginx certbot python3-certbot-nginx
+  elif need_cmd yum; then
+    as_root yum install -y epel-release || true
+    as_root yum install -y nginx certbot python3-certbot-nginx
+  else
+    err "未找到支持的包管理器，无法安装 nginx/certbot"
+    exit 1
+  fi
   as_root systemctl enable --now nginx
 }
 

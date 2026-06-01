@@ -11,6 +11,7 @@
 ## 功能
 
 - 一键部署到 Ubuntu/Debian VPS
+- 自动识别包管理器：`apt-get` / `dnf` / `yum`
 - 自动安装基础依赖：`curl`、`git`、`python3`、`openssl`，并确保 Node.js >= 18（低版本会自动升级到 Node.js 20 LTS）
 - 交互式设置调用 API Key
   - 可以自己输入
@@ -34,6 +35,7 @@
 
 - Ubuntu 22.04 / 24.04
 - Debian 11 / 12
+- CentOS / Rocky / AlmaLinux / RHEL 系统（使用 yum/dnf）
 - Node.js 会由脚本自动检查；低于 18 会安装 Node.js 20 LTS
 - root 用户，或有 sudo 权限的用户
 
