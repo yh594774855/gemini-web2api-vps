@@ -1,0 +1,11 @@
+name = "gemini-web2api-aaaggo"
+main = "worker.js"
+compatibility_date = "2025-12-01"
+workers_dev = true
+
+[vars]
+API_KEYS = "sk-replace-me"
+DEFAULT_MODEL = "gemini-3.5-flash"
+LOG_REQUESTS = "true"
+UPSTREAM_SOCKET = "true"
+GEMINI_BL = "boq_assistant-bard-web-server_20260529.02_p0"

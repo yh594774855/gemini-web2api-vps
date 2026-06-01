@@ -1,0 +1,9 @@
+# local secrets/runtime
+.env
+.env.*
+.dev.vars
+wrangler.toml
+.wrangler/
+*.log
+node_modules/
+worker.local.mjs
